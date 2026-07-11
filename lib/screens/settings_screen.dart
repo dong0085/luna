@@ -22,6 +22,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _nightDimming = true;
   bool _reduceMotion = false;
 
+  /// Flip a toggle and log the change (name + new value).
+  void _flip(String label, bool value, void Function(bool) apply) {
+    setState(() => apply(value));
+    debugPrint('$label settings changed, now: $value');
+  }
+
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
@@ -68,7 +74,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         _toggleRow(
                           'Autoplay next story',
                           _autoplay,
-                          (v) => setState(() => _autoplay = v),
+                          (v) => _flip('Autoplay next story', v, (nv) => _autoplay = nv),
                         ),
                       ]),
                       _groupLabel('Comfort'),
@@ -76,13 +82,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         _toggleRow(
                           'Night dimming',
                           _nightDimming,
-                          (v) => setState(() => _nightDimming = v),
+                          (v) => _flip('Night dimming', v, (nv) => _nightDimming = nv),
                           sub: 'Dim the screen while playing',
                         ),
                         _toggleRow(
                           'Reduce motion',
                           _reduceMotion,
-                          (v) => setState(() => _reduceMotion = v),
+                          (v) => _flip('Reduce motion', v, (nv) => _reduceMotion = nv),
                         ),
                       ]),
                       const SizedBox(height: 26),
