@@ -14,8 +14,10 @@ import 'package:luna/screens/generating_screen.dart';
 import 'package:luna/screens/home_screen.dart';
 import 'package:luna/screens/quick_start_screen.dart';
 import 'package:luna/screens/settings_screen.dart';
+import 'package:luna/screens/splash_screen.dart';
 import 'package:luna/screens/story_detail_screen.dart';
 import 'package:luna/theme/app_theme.dart';
+import 'package:luna/widgets/motion.dart';
 
 /// Renders each screen at phone dimensions and fails on any layout overflow or
 /// build assertion — the headless stand-in for the click-through we can't run.
@@ -48,6 +50,7 @@ void main() {
     Widget screen, {
     StoryRepository? repo,
     Story? current,
+    bool reduceMotion = false,
   }) async {
     tester.view.devicePixelRatio = 1.0;
     tester.view.physicalSize = const Size(390, 844);
@@ -68,7 +71,10 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: overrides,
-        child: MaterialApp(theme: AppTheme.dark, home: screen),
+        child: MaterialApp(
+          theme: AppTheme.dark,
+          home: MotionConfig(reduceMotion: reduceMotion, child: screen),
+        ),
       ),
     );
     await tester.pump(const Duration(milliseconds: 60));
@@ -76,6 +82,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   }
 
+  testWidgets('Splash renders', (t) => pump(t, const SplashScreen()));
   testWidgets('Home renders', (t) => pump(t, const HomeScreen()));
   testWidgets('Quick start renders', (t) async {
     t.view.devicePixelRatio = 1.0;
@@ -88,11 +95,13 @@ void main() {
         overrides: [storyRepositoryProvider.overrideWithValue(_FakeRepo())],
         child: MaterialApp(
           theme: AppTheme.dark,
-          home: const QuickStartScreen(),
+          home: const QuickStartScreen(seed: 1),
         ),
       ),
     );
-    await t.pump(const Duration(milliseconds: 60));
+    // First bubble spawns at 200ms (+40ms vis); let the pop-in settle.
+    await t.pump(const Duration(milliseconds: 260));
+    await t.pump(const Duration(milliseconds: 700));
 
     // Find the first displayed bubble by looking for one of the seed texts.
     final seeds = [
@@ -144,6 +153,20 @@ void main() {
       const BookshelfScreen(),
       repo: _FakeRepo([story, story, story]),
     ),
+  );
+
+  // Reduce-motion path (stilled animations) must also render cleanly.
+  testWidgets(
+    'Splash renders (reduce motion)',
+    (t) => pump(t, const SplashScreen(), reduceMotion: true),
+  );
+  testWidgets(
+    'Home renders (reduce motion)',
+    (t) => pump(t, const HomeScreen(), reduceMotion: true),
+  );
+  testWidgets(
+    'Generating renders (reduce motion)',
+    (t) => pump(t, const GeneratingScreen(), reduceMotion: true),
   );
 }
 
