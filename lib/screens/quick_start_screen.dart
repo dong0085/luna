@@ -117,19 +117,23 @@ class _QuickStartScreenState extends ConsumerState<QuickStartScreen> {
                     color: AppTheme.moon,
                     onPressed: () => context.pop(),
                   ),
-                  Text('Quick start',
-                      style: text.headlineSmall?.copyWith(
-                        fontSize: 23,
-                        fontWeight: FontWeight.w600,
-                      )),
+                  Text(
+                    'Quick start',
+                    style: text.headlineSmall?.copyWith(
+                      fontSize: 23,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 6),
-              Text('Tap a spark that calls to you',
-                  style: text.bodyMedium?.copyWith(
-                    color: AppTheme.moon.withValues(alpha: 0.5),
-                    fontWeight: FontWeight.w600,
-                  )),
+              Text(
+                'Tap a spark that calls to you',
+                style: text.bodyMedium?.copyWith(
+                  color: AppTheme.moon.withValues(alpha: 0.5),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, c) {
@@ -189,7 +193,7 @@ class _QuickStartScreenState extends ConsumerState<QuickStartScreen> {
       bottom: 24,
       child: Center(
         child: Container(
-          width: 180,
+          width: 300,
           padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(22),
@@ -211,11 +215,13 @@ class _QuickStartScreenState extends ConsumerState<QuickStartScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Start this one?',
-                  style: text.titleMedium?.copyWith(
-                    fontSize: 15.5,
-                    fontWeight: FontWeight.w500,
-                  )),
+              Text(
+                'Start this one?',
+                style: text.titleMedium?.copyWith(
+                  fontSize: 15.5,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
               const SizedBox(height: 13),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -236,15 +242,24 @@ class _QuickStartScreenState extends ConsumerState<QuickStartScreen> {
     );
   }
 
-  Widget _pill(String label, {required bool filled, required VoidCallback onTap}) {
+  Widget _pill(
+    String label, {
+    required bool filled,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: filled ? 18 : 15, vertical: 9),
+        padding: EdgeInsets.symmetric(
+          horizontal: filled ? 18 : 15,
+          vertical: 9,
+        ),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(999),
           gradient: filled
-              ? const LinearGradient(colors: [AppTheme.star, AppTheme.starLight])
+              ? const LinearGradient(
+                  colors: [AppTheme.star, AppTheme.starLight],
+                )
               : null,
           color: filled ? null : AppTheme.moon.withValues(alpha: 0.08),
           border: filled
@@ -256,7 +271,9 @@ class _QuickStartScreenState extends ConsumerState<QuickStartScreen> {
           style: TextStyle(
             fontSize: 13.5,
             fontWeight: filled ? FontWeight.w800 : FontWeight.w700,
-            color: filled ? AppTheme.night : AppTheme.moon.withValues(alpha: 0.7),
+            color: filled
+                ? AppTheme.night
+                : AppTheme.moon.withValues(alpha: 0.7),
           ),
         ),
       ),
@@ -265,7 +282,12 @@ class _QuickStartScreenState extends ConsumerState<QuickStartScreen> {
 }
 
 class _Bubble {
-  _Bubble({required this.id, required this.text, required this.slot, required this.dur});
+  _Bubble({
+    required this.id,
+    required this.text,
+    required this.slot,
+    required this.dur,
+  });
   final int id;
   final String text;
   final int slot;
@@ -343,6 +365,11 @@ class _BubbleView extends StatelessWidget {
     if (selected) return view;
     return view
         .animate(onPlay: (c) => c.repeat(reverse: true))
-        .moveY(begin: -5, end: 5, duration: (dur * 1000).round().ms, curve: Curves.easeInOut);
+        .moveY(
+          begin: -5,
+          end: 5,
+          duration: (dur * 1000).round().ms,
+          curve: Curves.easeInOut,
+        );
   }
 }

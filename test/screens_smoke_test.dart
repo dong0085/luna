@@ -27,8 +27,10 @@ void main() {
   final story = Story(
     id: 'story-1',
     title: 'The Lantern Keeper',
-    text: 'Every evening, when the harbor went the colour of plums, Old Rell '
-        'climbed the winding stair to light the lantern. ' * 3,
+    text:
+        'Every evening, when the harbor went the colour of plums, Old Rell '
+            'climbed the winding stair to light the lantern. ' *
+        3,
     audioUrl: 'https://example.com/a.mp3',
     durationSeconds: 605,
     settings: const StorySettings(
@@ -75,17 +77,74 @@ void main() {
   }
 
   testWidgets('Home renders', (t) => pump(t, const HomeScreen()));
-  testWidgets('Quick start renders', (t) => pump(t, const QuickStartScreen()));
+  testWidgets('Quick start renders', (t) async {
+    t.view.devicePixelRatio = 1.0;
+    t.view.physicalSize = const Size(390, 844);
+    addTearDown(t.view.resetPhysicalSize);
+    addTearDown(t.view.resetDevicePixelRatio);
+
+    await t.pumpWidget(
+      ProviderScope(
+        overrides: [storyRepositoryProvider.overrideWithValue(_FakeRepo())],
+        child: MaterialApp(
+          theme: AppTheme.dark,
+          home: const QuickStartScreen(),
+        ),
+      ),
+    );
+    await t.pump(const Duration(milliseconds: 60));
+
+    // Find the first displayed bubble by looking for one of the seed texts.
+    final seeds = [
+      'A lighthouse that hums',
+      'The last train to nowhere',
+      'Snow over a sleeping town',
+      'A whale who collects lullabies',
+      'The library beneath the sea',
+      'Moths and a porch light',
+      'A garden that grows at night',
+      'Keeper of the small tides',
+      'Where the fog goes to rest',
+      'A map drawn in starlight',
+      'The quiet between two stars',
+      'A ferry with no schedule',
+    ];
+    Finder? bubble;
+    for (final seed in seeds) {
+      final finder = find.text(seed);
+      if (finder.evaluate().isNotEmpty) {
+        bubble = finder;
+        break;
+      }
+    }
+    expect(bubble, isNotNull);
+    await t.tap(bubble!);
+    await t.pump(const Duration(milliseconds: 400));
+
+    // Replace the tree so State.dispose() cancels timers/tickers cleanly.
+    await t.pumpWidget(const SizedBox());
+    await t.pump(const Duration(milliseconds: 100));
+  });
   testWidgets('Custom renders', (t) => pump(t, const CustomStoryScreen()));
   testWidgets('Settings renders', (t) => pump(t, const SettingsScreen()));
-  testWidgets('Bookshelf (empty) renders', (t) => pump(t, const BookshelfScreen()));
+  testWidgets(
+    'Bookshelf (empty) renders',
+    (t) => pump(t, const BookshelfScreen()),
+  );
   testWidgets('Finished renders', (t) => pump(t, const FinishedScreen()));
   testWidgets('Generating renders', (t) => pump(t, const GeneratingScreen()));
-  testWidgets('Story detail renders',
-      (t) => pump(t, const StoryDetailScreen(), current: story));
-  testWidgets('Bookshelf (populated) renders',
-      (t) => pump(t, const BookshelfScreen(),
-          repo: _FakeRepo([story, story, story])));
+  testWidgets(
+    'Story detail renders',
+    (t) => pump(t, const StoryDetailScreen(), current: story),
+  );
+  testWidgets(
+    'Bookshelf (populated) renders',
+    (t) => pump(
+      t,
+      const BookshelfScreen(),
+      repo: _FakeRepo([story, story, story]),
+    ),
+  );
 }
 
 class _FakeRepo implements StoryRepository {
