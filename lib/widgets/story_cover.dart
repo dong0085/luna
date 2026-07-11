@@ -2,24 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../theme/app_theme.dart';
+import 'motion.dart';
 
 /// The dreamy cover art used across the app: a violet→ember gradient card with
-/// a crescent moon, rolling hills and a few stars. Optionally floats gently.
+/// a crescent moon, rolling hills and a few stars. Floats gently unless
+/// reduce-motion is on.
 class StoryCover extends StatelessWidget {
   const StoryCover({
     super.key,
     required this.size,
     this.gradient = AppTheme.coverGradient,
-    this.carveColor = AppTheme.violetDeep,
     this.float = true,
   });
 
   final double size;
   final Gradient gradient;
-
-  /// Colour used to "bite" the crescent out of the moon (should read as the
-  /// cover's own violet so the moon looks lit from one side).
-  final Color carveColor;
   final bool float;
 
   @override
@@ -53,46 +50,11 @@ class StoryCover extends StatelessWidget {
                 left: -0.10 * s,
                 child: _hill(0.70 * s, 0.46 * s, const Color(0x8C0E1030)),
               ),
-              // crescent moon: a parchment disc with an offset disc carving it
+              // crescent moon (masked, true bite)
               Positioned(
                 top: s * 0.24,
                 right: s * 0.20,
-                child: SizedBox(
-                  width: moonD,
-                  height: moonD,
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Container(
-                        width: moonD,
-                        height: moonD,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFFFBF3DE),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFFFBF3DE).withValues(alpha: 0.5),
-                              blurRadius: moonD * 0.5,
-                              spreadRadius: moonD * 0.1,
-                            ),
-                          ],
-                        ),
-                      ),
-                      Positioned(
-                        left: moonD * 0.24,
-                        top: moonD * 0.21,
-                        child: Container(
-                          width: moonD,
-                          height: moonD,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: carveColor,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                child: CrescentMoon(diameter: moonD),
               ),
             ],
           ),
@@ -115,10 +77,12 @@ class StoryCover extends StatelessWidget {
       child: cover,
     );
 
-    if (!float) return framed;
-    return framed
-        .animate(onPlay: (c) => c.repeat(reverse: true))
-        .moveY(begin: 0, end: -8, duration: 3500.ms, curve: Curves.easeInOut);
+    if (!float || MotionConfig.of(context)) return framed;
+    return RepaintBoundary(
+      child: framed
+          .animate(onPlay: (c) => c.repeat(reverse: true))
+          .moveY(begin: 0, end: -8, duration: 3500.ms, curve: Curves.easeInOut),
+    );
   }
 
   Widget _hill(double w, double h, Color color) {
@@ -141,7 +105,7 @@ class StoryCover extends StatelessWidget {
         height: d,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: const Color(0xFFFFF7E6),
+          color: AppTheme.moonWhite,
           boxShadow: glow
               ? [
                   BoxShadow(
@@ -155,4 +119,59 @@ class StoryCover extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A warm crescent — a filled disc with an offset bite carved out via an
+/// even-odd path (not two stacked shapes), plus a soft parchment/ember glow.
+class CrescentMoon extends StatelessWidget {
+  const CrescentMoon({super.key, required this.diameter});
+
+  final double diameter;
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size.square(diameter),
+      painter: _CrescentPainter(),
+    );
+  }
+}
+
+class _CrescentPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final d = size.width;
+    final full = Rect.fromLTWH(0, 0, d, d);
+    final biteCenter = Offset(d * 0.68, d * 0.30);
+    final biteRadius = d * 0.45;
+
+    // Crescent = full disc minus an offset disc (even-odd).
+    final path = Path()
+      ..fillType = PathFillType.evenOdd
+      ..addOval(full)
+      ..addOval(Rect.fromCircle(center: biteCenter, radius: biteRadius));
+
+    // Dual glow behind: a wider ember halo + a tighter parchment glow (§8).
+    final emberGlow = Paint()
+      ..color = AppTheme.ember.withValues(alpha: 0.35)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, d * 0.22);
+    canvas.drawPath(path, emberGlow);
+    final parchmentGlow = Paint()
+      ..color = const Color(0xFFFBF3DE).withValues(alpha: 0.5)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, d * 0.10);
+    canvas.drawPath(path, parchmentGlow);
+
+    // Warm face.
+    final face = Paint()
+      ..shader = const RadialGradient(
+        center: Alignment(-0.24, -0.36), // circle at 38% 32%
+        radius: 0.9,
+        colors: [Color(0xFFFCF6E4), Color(0xFFF3E9D2), Color(0xFFE8B27D)],
+        stops: [0.0, 0.42, 1.0],
+      ).createShader(full);
+    canvas.drawPath(path, face);
+  }
+
+  @override
+  bool shouldRepaint(_CrescentPainter oldDelegate) => false;
 }

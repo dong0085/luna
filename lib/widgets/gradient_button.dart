@@ -4,9 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 
 /// The primary call-to-action: a full-width violet gradient pill with dark text
-/// and a soft glow. Matches every "Generate story" / "Save to Bookshelf" button
-/// in the design.
-class GradientButton extends StatelessWidget {
+/// and a soft glow. Presses in slightly on tap-down (§11).
+class GradientButton extends StatefulWidget {
   const GradientButton({
     super.key,
     required this.label,
@@ -21,37 +20,53 @@ class GradientButton extends StatelessWidget {
   final EdgeInsets padding;
 
   @override
+  State<GradientButton> createState() => _GradientButtonState();
+}
+
+class _GradientButtonState extends State<GradientButton> {
+  bool _pressed = false;
+
+  void _setPressed(bool value) {
+    if (widget.onPressed == null) return;
+    setState(() => _pressed = value);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: AppTheme.ctaGradient,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.star.withValues(alpha: 0.6),
-            blurRadius: 30,
-            offset: const Offset(0, 14),
-            spreadRadius: -10,
+    return GestureDetector(
+      onTapDown: (_) => _setPressed(true),
+      onTapUp: (_) => _setPressed(false),
+      onTapCancel: () => _setPressed(false),
+      onTap: widget.onPressed,
+      child: AnimatedScale(
+        scale: _pressed ? 0.97 : 1.0,
+        duration: const Duration(milliseconds: 110),
+        curve: Curves.easeOut,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: AppTheme.ctaGradient,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.star.withValues(alpha: 0.6),
+                blurRadius: 30,
+                offset: const Offset(0, 14),
+                spreadRadius: -10,
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(18),
           child: Padding(
-            padding: padding,
+            padding: widget.padding,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (icon != null) ...[
-                  Icon(icon, size: 19, color: AppTheme.night),
+                if (widget.icon != null) ...[
+                  Icon(widget.icon, size: 19, color: AppTheme.night),
                   const SizedBox(width: 10),
                 ],
                 Flexible(
                   child: Text(
-                    label,
+                    widget.label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,

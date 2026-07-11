@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:just_audio_background/just_audio_background.dart';
@@ -9,6 +10,10 @@ import 'providers/providers.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
 
   // Local persistence (Bookshelf, resume, cached-audio paths).
   await Hive.initFlutter();
@@ -25,9 +30,7 @@ Future<void> main() async {
 
   runApp(
     ProviderScope(
-      overrides: [
-        storyRepositoryProvider.overrideWithValue(repository),
-      ],
+      overrides: [storyRepositoryProvider.overrideWithValue(repository)],
       child: const LunaApp(),
     ),
   );

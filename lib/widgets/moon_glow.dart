@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../theme/app_theme.dart';
+import 'motion.dart';
 
 /// The warm glowing moon used as a header ornament (Home, Generating).
 class MoonGlow extends StatelessWidget {
@@ -33,10 +34,12 @@ class MoonGlow extends StatelessWidget {
       ),
     );
 
-    if (!pulse) return moon;
-    return moon
-        .animate(onPlay: (c) => c.repeat(reverse: true))
-        .scaleXY(begin: 1, end: 1.05, duration: 2500.ms, curve: Curves.easeInOut)
-        .fadeIn();
+    if (!pulse || MotionConfig.of(context)) return moon;
+    // Steady glow that gently pulses in scale only (no opacity blink).
+    return RepaintBoundary(
+      child: moon
+          .animate(onPlay: (c) => c.repeat(reverse: true))
+          .scaleXY(begin: 1, end: 1.05, duration: 2500.ms, curve: Curves.easeInOut),
+    );
   }
 }

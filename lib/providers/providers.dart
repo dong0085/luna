@@ -43,6 +43,22 @@ class LibraryNotifier extends Notifier<List<Story>> {
   }
 }
 
+// --- Reduce motion (accessibility / sleep-app calm) -------------------------
+
+/// When true, ambient loops (starfield, breathing, sky spin, bubble bob…) are
+/// stilled. Toggled from Settings; also OR-ed with `MediaQuery.disableAnimations`
+/// by `MotionConfig`.
+final reduceMotionProvider =
+    NotifierProvider<ReduceMotionNotifier, bool>(ReduceMotionNotifier.new);
+
+class ReduceMotionNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void set(bool value) => state = value;
+  void toggle() => state = !state;
+}
+
 // --- The story currently loaded into the Player -----------------------------
 
 final currentStoryProvider =

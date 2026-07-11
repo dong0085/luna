@@ -1,28 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../providers/providers.dart';
 import '../theme/app_theme.dart';
 import '../widgets/ambient_background.dart';
 
-/// Local preferences. The app is authless, so the design's profile card and
-/// "Sign out" are dropped — only settings that map to real local state remain.
+/// Local preferences. The design's profile card + "Sign out" are shown for
+/// fidelity but non-functional (the app is authless). "Reduce motion" is wired
+/// to [reduceMotionProvider] and actually calms the ambient animation.
 ///
-/// NOTE: toggles/values are held in-session for now; persisting them to Hive is
-/// a follow-up (they don't yet feed generation defaults).
-class SettingsScreen extends StatefulWidget {
+/// NOTE: the other toggles/values are held in-session for now; persisting them
+/// to Hive is a follow-up (they don't yet feed generation defaults).
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _autoplay = true;
   bool _nightDimming = true;
-  bool _reduceMotion = false;
 
-  /// Flip a toggle and log the change (name + new value).
+  /// Flip a local toggle and log the change (name + new value).
   void _flip(String label, bool value, void Function(bool) apply) {
     setState(() => apply(value));
     debugPrint('$label settings changed, now: $value');
@@ -87,8 +89,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         _toggleRow(
                           'Reduce motion',
-                          _reduceMotion,
-                          (v) => _flip('Reduce motion', v, (nv) => _reduceMotion = nv),
+                          ref.watch(reduceMotionProvider),
+                          (v) {
+                            ref.read(reduceMotionProvider.notifier).set(v);
+                            debugPrint('Reduce motion settings changed, now: $v');
+                          },
                         ),
                       ]),
                       const SizedBox(height: 26),
