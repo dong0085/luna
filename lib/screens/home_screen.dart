@@ -39,17 +39,21 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: 20),
                     const MoonGlow(size: 58, pulse: true),
                     const SizedBox(height: 20),
-                    Text('Luna',
-                        style: text.displayLarge?.copyWith(
-                          fontSize: 46,
-                          fontWeight: FontWeight.w600,
-                        )),
+                    Text(
+                      'Luna',
+                      style: text.displayLarge?.copyWith(
+                        fontSize: 46,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(height: 6),
-                    Text('Calm stories to drift off to',
-                        style: text.titleMedium?.copyWith(
-                          color: AppTheme.star,
-                          fontWeight: FontWeight.w600,
-                        )),
+                    Text(
+                      'Stories to drift off to',
+                      style: text.titleMedium?.copyWith(
+                        color: AppTheme.star,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const Spacer(),
                     _HomeCard(
                       icon: Icons.auto_awesome,
@@ -67,11 +71,13 @@ class HomeScreen extends StatelessWidget {
                     const Spacer(),
                     TextButton(
                       onPressed: () => context.push(Routes.bookshelf),
-                      child: Text('Open your Bookshelf  ›',
-                          style: text.labelLarge?.copyWith(
-                            color: AppTheme.moon.withValues(alpha: 0.72),
-                            fontWeight: FontWeight.w700,
-                          )),
+                      child: Text(
+                        'Open your Bookshelf  ›',
+                        style: text.labelLarge?.copyWith(
+                          color: AppTheme.moon.withValues(alpha: 0.72),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -139,7 +145,9 @@ class _HomeCard extends StatelessWidget {
                     radius: 1.2,
                     colors: [Color(0x52E8B27D), Color(0x14E8B27D)],
                   ),
-                  border: Border.all(color: AppTheme.ember.withValues(alpha: 0.28)),
+                  border: Border.all(
+                    color: AppTheme.ember.withValues(alpha: 0.28),
+                  ),
                 ),
                 child: Icon(icon, color: AppTheme.ember, size: 24),
               ),
@@ -148,17 +156,21 @@ class _HomeCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title,
-                        style: text.titleLarge?.copyWith(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w600,
-                        )),
+                    Text(
+                      title,
+                      style: text.titleLarge?.copyWith(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(height: 5),
-                    Text(desc,
-                        style: text.bodyMedium?.copyWith(
-                          color: AppTheme.moon.withValues(alpha: 0.62),
-                          height: 1.5,
-                        )),
+                    Text(
+                      desc,
+                      style: text.bodyMedium?.copyWith(
+                        color: AppTheme.moon.withValues(alpha: 0.62),
+                        height: 1.5,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -187,7 +199,11 @@ class _CircleIconButton extends StatelessWidget {
           color: AppTheme.moon.withValues(alpha: 0.07),
           border: Border.all(color: AppTheme.moon.withValues(alpha: 0.14)),
         ),
-        child: Icon(icon, size: 22, color: AppTheme.moon.withValues(alpha: 0.78)),
+        child: Icon(
+          icon,
+          size: 22,
+          color: AppTheme.moon.withValues(alpha: 0.78),
+        ),
       ),
     );
   }
