@@ -9,6 +9,7 @@ import '../router.dart';
 import '../theme/app_theme.dart';
 import '../widgets/ambient_background.dart';
 import '../widgets/gradient_button.dart';
+import '../widgets/mini_player.dart';
 
 /// Level 2. A replay library of stories the user has listened to. Populated as
 /// a side effect of playback — nothing is generated here.
@@ -35,6 +36,7 @@ class BookshelfScreen extends ConsumerWidget {
       starCount: 46,
       child: Scaffold(
         backgroundColor: Colors.transparent,
+        bottomNavigationBar: const MiniPlayer(),
         appBar: AppBar(
           leadingWidth: 44,
           leading: IconButton(

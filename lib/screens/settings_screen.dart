@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../providers/providers.dart';
 import '../theme/app_theme.dart';
 import '../widgets/ambient_background.dart';
+import '../widgets/mini_player.dart';
 
 /// Local preferences. The design's profile card + "Sign out" are shown for
 /// fidelity but non-functional (the app is authless). "Reduce motion" is wired
@@ -38,6 +39,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       starCount: 40,
       child: Scaffold(
         backgroundColor: Colors.transparent,
+        bottomNavigationBar: const MiniPlayer(),
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 22),

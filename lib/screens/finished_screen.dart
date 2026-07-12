@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../providers/providers.dart';
 import '../router.dart';
 import '../theme/app_theme.dart';
 import '../widgets/ambient_background.dart';
 import '../widgets/gradient_button.dart';
 import '../widgets/story_cover.dart';
 
-/// Shown when a story reaches the end. The story is already on the shelf
-/// (save-on-play), so this is a calm send-off rather than a real save step.
-class FinishedScreen extends StatelessWidget {
+/// Shown when a story reaches the end. This is the one explicit save point:
+/// "Save to Bookshelf" persists the story; drifting home leaves it unsaved.
+class FinishedScreen extends ConsumerWidget {
   const FinishedScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final text = Theme.of(context).textTheme;
     return AmbientBackground(
       seed: 10,
@@ -62,7 +64,10 @@ class FinishedScreen extends StatelessWidget {
                 GradientButton(
                   label: 'Save to Bookshelf',
                   icon: Icons.bookmark_border,
-                  onPressed: () => context.go(Routes.bookshelf),
+                  onPressed: () {
+                    ref.read(playerControllerProvider.notifier).save();
+                    context.go(Routes.bookshelf);
+                  },
                 ),
                 TextButton(
                   onPressed: () => context.go(Routes.home),

@@ -144,7 +144,11 @@ class StoryDetailScreen extends ConsumerWidget {
                 if (resume)
                   TextButton(
                     onPressed: () {
-                      ref.read(currentStoryProvider.notifier).set(
+                      // Force a reset to the start. The Player's re-entry guard
+                      // keys on story id, so setting currentStory alone would be
+                      // skipped when this story is already the loaded one —
+                      // load() explicitly re-seeks the source to 0.
+                      ref.read(playerControllerProvider.notifier).load(
                             story.copyWith(lastPositionSeconds: 0),
                           );
                       context.pushReplacement(Routes.player);

@@ -69,6 +69,7 @@ class CurrentStoryNotifier extends Notifier<Story?> {
   Story? build() => null;
 
   void set(Story story) => state = story;
+  void clear() => state = null;
 }
 
 // --- Generation -------------------------------------------------------------
@@ -90,20 +91,26 @@ class GenerationNotifier extends AsyncNotifier<Story?> {
   void reset() => state = const AsyncValue.data(null);
 }
 
-// --- Player (playback + save-on-play + resume) ------------------------------
+// --- Player (playback + explicit save + resume) -----------------------------
 
 final playerControllerProvider =
     NotifierProvider<PlayerController, Story?>(PlayerController.new);
 
-/// Drives the shared [AudioPlayer]: loads a story, saves it on first play,
-/// resumes from its last position, and continuously persists the position.
+/// Drives the shared [AudioPlayer]: loads a story, resumes from its last
+/// position, and — once the story is on the shelf — continuously persists the
+/// position. A freshly generated story is only an in-memory draft: it reaches
+/// the Bookshelf when the user explicitly [save]s it (the Finished screen), and
+/// is dropped by [discard] (the mini player's ×). Replaying an already-saved
+/// story keeps persisting its resume position.
 class PlayerController extends Notifier<Story?> {
   late final AudioPlayer _player;
-  StreamSubscription<bool>? _playingSub;
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<ProcessingState>? _stateSub;
 
-  bool _savedThisLoad = false;
+  /// True once the current story lives in the repo — either because we're
+  /// replaying a saved story or because the user just saved this draft. Gates
+  /// position/completion persistence so a draft never touches Hive on its own.
+  bool _saved = false;
   DateTime _lastPersist = DateTime.fromMillisecondsSinceEpoch(0);
 
   AudioPlayer get player => _player;
@@ -112,7 +119,6 @@ class PlayerController extends Notifier<Story?> {
   Story? build() {
     _player = ref.read(audioPlayerProvider);
     ref.onDispose(() {
-      _playingSub?.cancel();
       _positionSub?.cancel();
       _stateSub?.cancel();
     });
@@ -122,7 +128,9 @@ class PlayerController extends Notifier<Story?> {
   /// Load a story into the player and resume from its last position.
   Future<void> load(Story story) async {
     state = story;
-    _savedThisLoad = false;
+    // Already-saved stories (Bookshelf replay) keep persisting their position;
+    // a fresh draft does not until the user saves it.
+    _saved = ref.read(storyRepositoryProvider).exists(story.id);
     ref.read(currentStoryProvider.notifier).set(story);
 
     await _player.setAudioSource(
@@ -142,16 +150,6 @@ class PlayerController extends Notifier<Story?> {
   }
 
   void _wireListeners() {
-    _playingSub?.cancel();
-    _playingSub = _player.playingStream.listen((playing) {
-      // Save-on-first-play: the moment playback starts, the story earns its
-      // place on the Bookshelf.
-      if (playing && !_savedThisLoad) {
-        _savedThisLoad = true;
-        _saveOnPlay();
-      }
-    });
-
     _positionSub?.cancel();
     _positionSub = _player.positionStream.listen((pos) {
       final now = DateTime.now();
@@ -167,19 +165,34 @@ class PlayerController extends Notifier<Story?> {
     });
   }
 
-  Future<void> _saveOnPlay() async {
+  /// Persist the current story to the Bookshelf. This is the single explicit
+  /// save point (the Finished screen's "Save to Bookshelf").
+  Future<void> save() async {
     final story = state;
     if (story == null) return;
     final saved = story.copyWith(listenedAt: DateTime.now());
     state = saved;
+    _saved = true;
     ref.read(currentStoryProvider.notifier).set(saved);
     await ref.read(storyRepositoryProvider).save(saved);
     ref.read(libraryProvider.notifier).refresh();
   }
 
+  /// Drop the current story: stop playback and clear it from the player and the
+  /// now-playing channel so the mini player disappears. A never-saved draft is
+  /// simply gone; a saved story stays on the shelf (only its playback stops).
+  Future<void> discard() async {
+    await _player.stop();
+    _positionSub?.cancel();
+    _stateSub?.cancel();
+    _saved = false;
+    state = null;
+    ref.read(currentStoryProvider.notifier).clear();
+  }
+
   Future<void> _persistPosition(Duration pos) async {
     final story = state;
-    if (story == null || !_savedThisLoad) return;
+    if (story == null || !_saved) return;
     final updated = story.copyWith(lastPositionSeconds: pos.inSeconds);
     state = updated;
     await ref.read(storyRepositoryProvider).save(updated);
@@ -190,8 +203,16 @@ class PlayerController extends Notifier<Story?> {
     if (story == null) return;
     final updated = story.copyWith(completed: true, lastPositionSeconds: 0);
     state = updated;
-    await ref.read(storyRepositoryProvider).save(updated);
-    ref.read(libraryProvider.notifier).refresh();
+    ref.read(currentStoryProvider.notifier).set(updated);
+    // Park at the start so a finished story shows 0:00 and replays cleanly
+    // (the mini player stays put when a story ends off the Player screen).
+    await _player.seek(Duration.zero);
+    // Only persist if the story is on the shelf; a finished draft still waits
+    // for an explicit save.
+    if (_saved) {
+      await ref.read(storyRepositoryProvider).save(updated);
+      ref.read(libraryProvider.notifier).refresh();
+    }
   }
 
   Future<void> playPause() =>

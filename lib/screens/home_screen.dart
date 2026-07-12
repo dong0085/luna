@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../router.dart';
 import '../theme/app_theme.dart';
 import '../widgets/ambient_background.dart';
+import '../widgets/mini_player.dart';
 import '../widgets/moon_glow.dart';
 
 /// Level 1. Moon-lit hero with the two on-ramps and an entry to the Bookshelf.
@@ -18,6 +19,7 @@ class HomeScreen extends StatelessWidget {
       starCount: 60,
       child: Scaffold(
         backgroundColor: Colors.transparent,
+        bottomNavigationBar: const MiniPlayer(),
         body: SafeArea(
           child: Stack(
             children: [

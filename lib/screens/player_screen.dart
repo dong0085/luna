@@ -35,7 +35,13 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final story = ref.read(currentStoryProvider);
       if (story != null) {
-        ref.read(playerControllerProvider.notifier).load(story);
+        // Reopening from the mini player: the story is already loaded and
+        // playing, so re-loading would reset the source and restart it. Only
+        // load when this is a different (freshly generated / chosen) story.
+        final loaded = ref.read(playerControllerProvider);
+        if (loaded?.id != story.id) {
+          ref.read(playerControllerProvider.notifier).load(story);
+        }
       }
       // When the story ends, drift to the "finished" screen.
       final player = ref.read(audioPlayerProvider);
