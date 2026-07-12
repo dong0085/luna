@@ -204,8 +204,11 @@ class PlayerController extends Notifier<Story?> {
     final updated = story.copyWith(completed: true, lastPositionSeconds: 0);
     state = updated;
     ref.read(currentStoryProvider.notifier).set(updated);
-    // Park at the start so a finished story shows 0:00 and replays cleanly
+    // On completion just_audio leaves `playing` true, so seeking back to the
+    // start would immediately restart playback (an audible loop). Pause first,
+    // then park at the start so a finished story shows 0:00 and replays cleanly
     // (the mini player stays put when a story ends off the Player screen).
+    await _player.pause();
     await _player.seek(Duration.zero);
     // Only persist if the story is on the shelf; a finished draft still waits
     // for an explicit save.
