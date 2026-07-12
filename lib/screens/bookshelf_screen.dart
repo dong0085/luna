@@ -74,12 +74,14 @@ class BookshelfScreen extends ConsumerWidget {
                               story: story,
                               colors: _palettes[i % _palettes.length],
                               height: _heights[i % _heights.length],
-                              onTap: () {
-                                ref
-                                    .read(currentStoryProvider.notifier)
-                                    .set(story);
-                                context.push(Routes.storyDetail);
-                              },
+                              // Opening detail is a read-only preview — pass the
+                              // story via `extra` rather than setting
+                              // currentStory, so the mini player only reflects a
+                              // story once the user actually plays it.
+                              onTap: () => context.push(
+                                Routes.storyDetail,
+                                extra: story,
+                              ),
                             );
                           },
                         ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../models/story.dart';
 import '../providers/providers.dart';
 import '../router.dart';
 import '../theme/app_theme.dart';
@@ -12,8 +13,14 @@ import '../widgets/story_cover.dart';
 
 /// Details for a saved story: cover, blurb, the settings used, and resume /
 /// restart controls that go straight to the Player (replay — no generation).
+///
+/// The story arrives via the route's `extra` (constructor) — opening detail is a
+/// read-only preview and must not touch [currentStoryProvider], so the mini
+/// player only ever reflects a story the user actually plays.
 class StoryDetailScreen extends ConsumerWidget {
-  const StoryDetailScreen({super.key});
+  const StoryDetailScreen({super.key, required this.story});
+
+  final Story? story;
 
   String _fmt(Duration d) {
     final m = d.inMinutes.remainder(60).toString();
@@ -23,7 +30,7 @@ class StoryDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final story = ref.watch(currentStoryProvider);
+    final story = this.story;
     final text = Theme.of(context).textTheme;
 
     if (story == null) {
