@@ -85,7 +85,7 @@ class StoryDetailScreen extends ConsumerWidget {
                             )),
                         const SizedBox(height: 7),
                         Text(
-                          '${story.settings.length.duration} · ${_lastPlayed(story.listenedAt)}',
+                          '${story.settings.length.label} · ${_lastPlayed(story.listenedAt)}',
                           style: TextStyle(
                             fontSize: 13.5,
                             fontWeight: FontWeight.w700,
@@ -98,7 +98,7 @@ class StoryDetailScreen extends ConsumerWidget {
                           runSpacing: 9,
                           alignment: WrapAlignment.center,
                           children: [
-                            _tag(story.settings.length.duration),
+                            _tag(story.settings.length.label),
                             _tag(_cap(story.settings.mood)),
                             if (story.settings.voice != null)
                               _tag('${story.settings.voice} voice'),

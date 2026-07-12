@@ -184,7 +184,7 @@ class _ShelfItem extends StatelessWidget {
               )),
           const SizedBox(height: 4),
           Text(
-            resume ? 'Resume' : story.settings.length.duration,
+            resume ? 'Resume' : story.settings.length.label,
             style: TextStyle(
               fontSize: 12.5,
               fontWeight: FontWeight.w700,

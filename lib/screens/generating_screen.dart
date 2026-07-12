@@ -445,7 +445,7 @@ class _GeneratingScreenState extends ConsumerState<GeneratingScreen>
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '${story.settings.length.duration} · ${_moodLabel(story.settings.mood)}',
+                    '${story.settings.length.label} · ${_moodLabel(story.settings.mood)}',
                     style: const TextStyle(
                       color: AppTheme.star,
                       fontSize: 14,

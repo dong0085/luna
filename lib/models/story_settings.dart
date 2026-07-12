@@ -2,11 +2,11 @@ import 'story_length.dart';
 
 /// The settings a user picked when creating a story.
 ///
-/// The documented backend contract is `{topic, mood, length}`. Everything else
-/// here — [voice], [backgroundSound], and the literal "Adaptive" choice — is
-/// stored locally and kept out of the POST via [toRequestJson], so we never
-/// change the API contract unilaterally. Coordinate with the backend dev before
-/// wiring any of these into the request.
+/// The documented backend contract is `{topic, mood, length}`. `mood` may be
+/// the literal "adaptive" — the backend resolves it. Everything else here —
+/// [voice] and [backgroundSound] — is stored locally and kept out of the POST
+/// via [toRequestJson], so we never change the API contract unilaterally.
+/// Coordinate with the backend dev before wiring any of these into the request.
 class StorySettings {
   const StorySettings({
     required this.topic,
@@ -31,8 +31,9 @@ class StorySettings {
 
   bool get isAdaptiveMood => mood.trim().toLowerCase() == 'adaptive';
 
-  /// What actually gets sent as `mood`: a real mood, never "adaptive".
-  String get resolvedMood => isAdaptiveMood ? 'calm' : mood.trim().toLowerCase();
+  /// What gets sent as `mood`, lowercased. "Adaptive" is passed through as
+  /// `adaptive` for the backend to resolve.
+  String get resolvedMood => mood.trim().toLowerCase();
 
   StorySettings copyWith({
     String? topic,
