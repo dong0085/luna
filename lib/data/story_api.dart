@@ -11,7 +11,7 @@ import '../models/story_settings.dart';
 /// [Story]. This is the single swap point between the app and the backend.
 ///
 /// Contract (do not change unilaterally):
-///   POST /stories/generate  { topic, mood, length }
+///   POST /stories/generate  { topic, mood, narratorType, length }
 ///   -> 201 { id, title, story, audioUrl, durationSeconds }
 ///   errors -> { error: { code, message } }
 class StoryApi {

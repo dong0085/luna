@@ -33,7 +33,7 @@ void main() {
     expect(restored.listenedAt, story.listenedAt);
   });
 
-  test('Request payload omits the locally-stored voice', () {
+  test('Request payload maps voice onto narratorType (contract fields only)', () {
     const settings = StorySettings(
       topic: 'A lighthouse and a whale',
       mood: 'dreamy',
@@ -43,8 +43,15 @@ void main() {
 
     final payload = settings.toRequestJson();
 
-    expect(payload.keys, containsAll(['topic', 'mood', 'length']));
+    expect(payload.keys, containsAll(['topic', 'mood', 'narratorType', 'length']));
     expect(payload.containsKey('voice'), isFalse);
+    expect(payload['narratorType'], 'soft');
     expect(payload['length'], 'medium');
+  });
+
+  test('Request payload defaults narratorType to adaptive when voice is unset', () {
+    const settings = StorySettings(topic: 'A quiet lighthouse');
+
+    expect(settings.toRequestJson()['narratorType'], 'adaptive');
   });
 }
