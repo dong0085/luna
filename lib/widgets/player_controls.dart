@@ -190,14 +190,19 @@ class ControlButton extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            Icon(icon, size: 22, color: AppTheme.moon),
+            // Enlarge the circular-arrow glyph so its hollow centre is wide
+            // enough to seat the "15" label (mirrors Material's replay_N icons).
+            Icon(icon, size: subLabel != null ? 26 : 22, color: AppTheme.moon),
             if (subLabel != null)
-              Positioned(
-                bottom: 14,
+              // Nested in the arrow's hollow centre, nudged down a hair to sit
+              // on the glyph's optical centre.
+              Transform.translate(
+                offset: const Offset(0, 1),
                 child: Text(
                   subLabel!,
                   style: const TextStyle(
-                    fontSize: 9,
+                    fontSize: 8,
+                    height: 1,
                     fontWeight: FontWeight.w800,
                     color: AppTheme.moon,
                   ),
