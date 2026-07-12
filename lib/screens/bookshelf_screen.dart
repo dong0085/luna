@@ -41,7 +41,10 @@ class BookshelfScreen extends ConsumerWidget {
           leadingWidth: 44,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-            onPressed: () => context.pop(),
+            // Reached by push (from Home) → pop back; reached by go (after
+            // saving on Finished, which resets the stack) → fall back to Home.
+            onPressed: () =>
+                context.canPop() ? context.pop() : context.go(Routes.home),
           ),
         ),
         body: SafeArea(
