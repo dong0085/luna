@@ -35,7 +35,13 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final story = ref.read(currentStoryProvider);
       if (story != null) {
-        ref.read(playerControllerProvider.notifier).load(story);
+        // Reopening from the mini player: the story is already loaded and
+        // playing, so re-loading would reset the source and restart it. Only
+        // load when this is a different (freshly generated / chosen) story.
+        final loaded = ref.read(playerControllerProvider);
+        if (loaded?.id != story.id) {
+          ref.read(playerControllerProvider.notifier).load(story);
+        }
       }
       // When the story ends, drift to the "finished" screen.
       final player = ref.read(audioPlayerProvider);
@@ -123,8 +129,8 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
               LayoutBuilder(
                 builder: (context, constraints) {
                   final height = constraints.maxHeight;
-                  final isSmall = height < 720;
-                  final isTiny = height < 600;
+                  final isSmall = height < 760;
+                  final isTiny = height < 650;
 
                   final coverSize = isTiny ? 140.0 : (isSmall ? 180.0 : 232.0);
                   final padding = EdgeInsets.fromLTRB(
@@ -136,148 +142,141 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
 
                   return Padding(
                     padding: padding,
-                    child: SingleChildScrollView(
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minHeight: height - padding.vertical,
+                    child: Column(
+                      children: [
+                        const Spacer(flex: 2),
+                        StoryCover(size: coverSize),
+                        SizedBox(
+                          height: isTiny ? 16.0 : (isSmall ? 24.0 : 34.0),
                         ),
-                        child: IntrinsicHeight(
-                          child: Column(
+                        Text(
+                          story.title,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: text.headlineMedium?.copyWith(
+                            fontSize: isTiny
+                                ? 22.0
+                                : (isSmall ? 24.0 : 27.0),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${story.settings.length.label} · ${_moodLabel(story.settings.mood)}',
+                          style: text.bodyMedium?.copyWith(
+                            color: AppTheme.star,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        SizedBox(
+                          height: isTiny ? 10.0 : (isSmall ? 14.0 : 18.0),
+                        ),
+                        // Sleep timer chip (visual — a natural next feature to wire).
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 7,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(999),
+                            color: AppTheme.ember.withValues(alpha: 0.1),
+                            border: Border.all(
+                              color: AppTheme.ember.withValues(
+                                alpha: 0.22,
+                              ),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Spacer(flex: 2),
-                              StoryCover(size: coverSize),
-                              SizedBox(
-                                height: isTiny ? 16.0 : (isSmall ? 24.0 : 34.0),
+                              const Icon(
+                                Icons.bedtime_outlined,
+                                size: 14,
+                                color: AppTheme.ember,
                               ),
+                              const SizedBox(width: 7),
                               Text(
-                                story.title,
-                                textAlign: TextAlign.center,
-                                style: text.headlineMedium?.copyWith(
-                                  fontSize: isTiny
-                                      ? 22.0
-                                      : (isSmall ? 24.0 : 27.0),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                '${story.settings.length.duration} · ${_moodLabel(story.settings.mood)}',
-                                style: text.bodyMedium?.copyWith(
-                                  color: AppTheme.star,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              SizedBox(
-                                height: isTiny ? 10.0 : (isSmall ? 14.0 : 18.0),
-                              ),
-                              // Sleep timer chip (visual — a natural next feature to wire).
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 7,
-                                ),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(999),
-                                  color: AppTheme.ember.withValues(alpha: 0.1),
-                                  border: Border.all(
-                                    color: AppTheme.ember.withValues(
-                                      alpha: 0.22,
-                                    ),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(
-                                      Icons.bedtime_outlined,
-                                      size: 14,
-                                      color: AppTheme.ember,
-                                    ),
-                                    const SizedBox(width: 7),
-                                    Text(
-                                      'Sleep timer · when story ends',
-                                      style: TextStyle(
-                                        color: AppTheme.ember,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const Spacer(flex: 3),
-                              // Progress driven by the player's position stream.
-                              StreamBuilder<Duration>(
-                                stream: player.positionStream,
-                                builder: (context, snap) {
-                                  final pos = snap.data ?? Duration.zero;
-                                  final total =
-                                      player.duration ?? story.duration;
-                                  final value = total.inMilliseconds == 0
-                                      ? 0.0
-                                      : pos.inMilliseconds /
-                                            total.inMilliseconds;
-                                  return StoryProgressBar(
-                                    value: value,
-                                    leftLabel: _fmt(pos),
-                                    rightLabel: _fmt(total),
-                                    onSeek: (f) => player.seek(total * f),
-                                  );
-                                },
-                              ),
-                              SizedBox(
-                                height: isTiny ? 16.0 : (isSmall ? 22.0 : 30.0),
-                              ),
-                              StreamBuilder<PlayerState>(
-                                stream: player.playerStateStream,
-                                builder: (context, snap) {
-                                  final playing = snap.data?.playing ?? false;
-                                  final ps = snap.data?.processingState;
-                                  final loading =
-                                      ps == ProcessingState.loading ||
-                                      ps == ProcessingState.buffering;
-                                  return Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      ControlButton(
-                                        icon: Icons.restart_alt,
-                                        onTap: controller.restart,
-                                      ),
-                                      const SizedBox(width: 26),
-                                      PlayButton(
-                                        playing: playing,
-                                        loading: loading,
-                                        onTap: controller.playPause,
-                                      ),
-                                      const SizedBox(width: 26),
-                                      ControlButton(
-                                        icon: Icons.replay,
-                                        subLabel: '15',
-                                        onTap: controller.rewind15,
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
-                              SizedBox(
-                                height: isTiny ? 12.0 : (isSmall ? 18.0 : 26.0),
-                              ),
-                              TextButton(
-                                onPressed: () => context.go(Routes.home),
-                                child: Text(
-                                  'Back to home',
-                                  style: text.labelLarge?.copyWith(
-                                    color: AppTheme.moon.withValues(
-                                      alpha: 0.62,
-                                    ),
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                                'Sleep timer · when story ends',
+                                style: TextStyle(
+                                  color: AppTheme.ember,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      ),
+                        const Spacer(flex: 3),
+                        // Progress driven by the player's position stream.
+                        StreamBuilder<Duration>(
+                          stream: player.positionStream,
+                          builder: (context, snap) {
+                            final pos = snap.data ?? Duration.zero;
+                            final total =
+                                player.duration ?? story.duration;
+                            final value = total.inMilliseconds == 0
+                                ? 0.0
+                                : pos.inMilliseconds /
+                                      total.inMilliseconds;
+                            return StoryProgressBar(
+                              value: value,
+                              leftLabel: _fmt(pos),
+                              rightLabel: _fmt(total),
+                              onSeek: (f) => player.seek(total * f),
+                            );
+                          },
+                        ),
+                        SizedBox(
+                          height: isTiny ? 16.0 : (isSmall ? 22.0 : 30.0),
+                        ),
+                        StreamBuilder<PlayerState>(
+                          stream: player.playerStateStream,
+                          builder: (context, snap) {
+                            final playing = snap.data?.playing ?? false;
+                            final ps = snap.data?.processingState;
+                            final loading =
+                                ps == ProcessingState.loading ||
+                                ps == ProcessingState.buffering;
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                ControlButton(
+                                  icon: Icons.restart_alt,
+                                  onTap: controller.restart,
+                                ),
+                                const SizedBox(width: 26),
+                                PlayButton(
+                                  playing: playing,
+                                  loading: loading,
+                                  onTap: controller.playPause,
+                                ),
+                                const SizedBox(width: 26),
+                                ControlButton(
+                                  icon: Icons.replay,
+                                  subLabel: '15',
+                                  onTap: controller.rewind15,
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                        SizedBox(
+                          height: isTiny ? 12.0 : (isSmall ? 18.0 : 26.0),
+                        ),
+                        TextButton(
+                          onPressed: () => context.go(Routes.home),
+                          child: Text(
+                            'Back to home',
+                            style: text.labelLarge?.copyWith(
+                              color: AppTheme.moon.withValues(
+                                alpha: 0.62,
+                              ),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 },

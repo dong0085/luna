@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../models/story.dart';
 import '../providers/providers.dart';
 import '../router.dart';
 import '../theme/app_theme.dart';
@@ -12,8 +13,14 @@ import '../widgets/story_cover.dart';
 
 /// Details for a saved story: cover, blurb, the settings used, and resume /
 /// restart controls that go straight to the Player (replay — no generation).
+///
+/// The story arrives via the route's `extra` (constructor) — opening detail is a
+/// read-only preview and must not touch [currentStoryProvider], so the mini
+/// player only ever reflects a story the user actually plays.
 class StoryDetailScreen extends ConsumerWidget {
-  const StoryDetailScreen({super.key});
+  const StoryDetailScreen({super.key, required this.story});
+
+  final Story? story;
 
   String _fmt(Duration d) {
     final m = d.inMinutes.remainder(60).toString();
@@ -23,7 +30,7 @@ class StoryDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final story = ref.watch(currentStoryProvider);
+    final story = this.story;
     final text = Theme.of(context).textTheme;
 
     if (story == null) {
@@ -85,7 +92,7 @@ class StoryDetailScreen extends ConsumerWidget {
                             )),
                         const SizedBox(height: 7),
                         Text(
-                          '${story.settings.length.duration} · ${_lastPlayed(story.listenedAt)}',
+                          '${story.settings.length.label} · ${_lastPlayed(story.listenedAt)}',
                           style: TextStyle(
                             fontSize: 13.5,
                             fontWeight: FontWeight.w700,
@@ -98,7 +105,7 @@ class StoryDetailScreen extends ConsumerWidget {
                           runSpacing: 9,
                           alignment: WrapAlignment.center,
                           children: [
-                            _tag(story.settings.length.duration),
+                            _tag(story.settings.length.label),
                             _tag(_cap(story.settings.mood)),
                             if (story.settings.voice != null)
                               _tag('${story.settings.voice} voice'),
@@ -144,7 +151,11 @@ class StoryDetailScreen extends ConsumerWidget {
                 if (resume)
                   TextButton(
                     onPressed: () {
-                      ref.read(currentStoryProvider.notifier).set(
+                      // Force a reset to the start. The Player's re-entry guard
+                      // keys on story id, so setting currentStory alone would be
+                      // skipped when this story is already the loaded one —
+                      // load() explicitly re-seeks the source to 0.
+                      ref.read(playerControllerProvider.notifier).load(
                             story.copyWith(lastPositionSeconds: 0),
                           );
                       context.pushReplacement(Routes.player);

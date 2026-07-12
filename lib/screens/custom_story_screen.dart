@@ -12,9 +12,8 @@ import '../widgets/ambient_background.dart';
 import '../widgets/gradient_button.dart';
 import '../widgets/length_selector.dart';
 
-/// Custom on-ramp: full control over topic, mood, voice, background sound and
-/// length. "Adaptive" lets Luna choose; those choices stay local (see
-/// [StorySettings]).
+/// Custom on-ramp: full control over topic, mood, voice and length. "Adaptive"
+/// lets Luna choose (see [StorySettings]).
 class CustomStoryScreen extends ConsumerStatefulWidget {
   const CustomStoryScreen({super.key});
 
@@ -27,11 +26,9 @@ class _CustomStoryScreenState extends ConsumerState<CustomStoryScreen> {
   StoryLength _length = StoryLength.medium;
   String _mood = 'Adaptive';
   String _voice = 'Adaptive';
-  String _sound = 'Adaptive';
 
   static const _moods = ['Adaptive', 'Calm', 'Dreamy', 'Cozy', 'Adventurous', 'Mysterious'];
   static const _voices = ['Adaptive', 'Default', 'Warm', 'Soft', 'Deep'];
-  static const _sounds = ['Adaptive', 'None', 'Rain', 'Waves', 'Fireplace'];
 
   @override
   void dispose() {
@@ -45,7 +42,6 @@ class _CustomStoryScreenState extends ConsumerState<CustomStoryScreen> {
       mood: _mood,
       length: _length,
       voice: _voice,
-      backgroundSound: _sound,
     );
     ref.read(generationProvider.notifier).generate(settings);
     context.push(Routes.generating);
@@ -114,12 +110,6 @@ class _CustomStoryScreenState extends ConsumerState<CustomStoryScreen> {
                       options: _voices,
                       selected: _voice,
                       onSelect: (v) => setState(() => _voice = v),
-                    ),
-                    _label('Background sound'),
-                    _ChipRow(
-                      options: _sounds,
-                      selected: _sound,
-                      onSelect: (v) => setState(() => _sound = v),
                     ),
                     _label('Length'),
                     LengthSelector(

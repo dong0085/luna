@@ -10,6 +10,7 @@ import 'screens/player_screen.dart';
 import 'screens/quick_start_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/splash_screen.dart';
+import 'models/story.dart';
 import 'screens/story_detail_screen.dart';
 
 /// App routes. The moonrise splash opens the app and hands off to Home;
@@ -69,7 +70,8 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: Routes.storyDetail,
-      builder: (context, state) => const StoryDetailScreen(),
+      builder: (context, state) =>
+          StoryDetailScreen(story: state.extra as Story?),
     ),
     GoRoute(
       path: Routes.settings,

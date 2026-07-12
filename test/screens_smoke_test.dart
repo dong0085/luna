@@ -144,7 +144,7 @@ void main() {
   testWidgets('Generating renders', (t) => pump(t, const GeneratingScreen()));
   testWidgets(
     'Story detail renders',
-    (t) => pump(t, const StoryDetailScreen(), current: story),
+    (t) => pump(t, StoryDetailScreen(story: story)),
   );
   testWidgets(
     'Bookshelf (populated) renders',

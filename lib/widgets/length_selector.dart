@@ -69,15 +69,6 @@ class LengthSelector extends StatelessWidget {
                       ? AppTheme.moon
                       : AppTheme.moon.withValues(alpha: 0.82),
                 )),
-            const SizedBox(height: 3),
-            Text(length.duration,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
-                  color: selected
-                      ? AppTheme.star
-                      : AppTheme.moon.withValues(alpha: 0.45),
-                )),
           ],
         ),
       ),

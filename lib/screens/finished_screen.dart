@@ -1,20 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../providers/providers.dart';
 import '../router.dart';
 import '../theme/app_theme.dart';
 import '../widgets/ambient_background.dart';
 import '../widgets/gradient_button.dart';
 import '../widgets/story_cover.dart';
 
-/// Shown when a story reaches the end. The story is already on the shelf
-/// (save-on-play), so this is a calm send-off rather than a real save step.
-class FinishedScreen extends StatelessWidget {
+/// Shown when a story reaches the end. For a freshly generated story this is
+/// the one explicit save point ("Save to Bookshelf"); for a replay of an
+/// already-saved story it's a calm send-off (there's nothing to save).
+class FinishedScreen extends ConsumerWidget {
   const FinishedScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final text = Theme.of(context).textTheme;
+    final story = ref.watch(currentStoryProvider);
+    // A replayed story is already on the shelf (it exists in the repo); a fresh
+    // draft is not. Only the draft gets the explicit save prompt. (Reading the
+    // repo — not the player — keeps this off the audio plugin in widget tests.)
+    final alreadySaved =
+        story != null && ref.read(storyRepositoryProvider).exists(story.id);
     return AmbientBackground(
       seed: 10,
       starCount: 44,
@@ -34,7 +43,9 @@ class FinishedScreen extends StatelessWidget {
                       SizedBox(
                         width: 280,
                         child: Text(
-                          'The stories are yours to keep',
+                          alreadySaved
+                              ? 'Sleep well tonight'
+                              : 'The stories are yours to keep',
                           textAlign: TextAlign.center,
                           style: text.headlineMedium?.copyWith(
                             fontSize: 30,
@@ -47,8 +58,12 @@ class FinishedScreen extends StatelessWidget {
                       SizedBox(
                         width: 270,
                         child: Text(
-                          'Save tonight’s story to your Bookshelf, or drift back '
-                          'home — it’ll be here whenever you want it again.',
+                          alreadySaved
+                              ? 'This story is already on your shelf, waiting '
+                                  'for the next quiet night.'
+                              : 'Save tonight’s story to your Bookshelf, or '
+                                  'drift back home — it’ll be here whenever you '
+                                  'want it again.',
                           textAlign: TextAlign.center,
                           style: text.bodyMedium?.copyWith(
                             color: AppTheme.moon.withValues(alpha: 0.6),
@@ -60,9 +75,18 @@ class FinishedScreen extends StatelessWidget {
                   ),
                 ),
                 GradientButton(
-                  label: 'Save to Bookshelf',
-                  icon: Icons.bookmark_border,
-                  onPressed: () => context.go(Routes.bookshelf),
+                  label:
+                      alreadySaved ? 'Back to Bookshelf' : 'Save to Bookshelf',
+                  icon:
+                      alreadySaved ? Icons.auto_stories : Icons.bookmark_border,
+                  onPressed: () {
+                    // Fresh draft: persist here (the one explicit save point).
+                    // Replay: it's already saved, so just head to the shelf.
+                    if (!alreadySaved) {
+                      ref.read(playerControllerProvider.notifier).save();
+                    }
+                    context.go(Routes.bookshelf);
+                  },
                 ),
                 TextButton(
                   onPressed: () => context.go(Routes.home),

@@ -65,18 +65,31 @@ class Story {
   }
 
   /// Build from a fresh `POST /stories/generate` response and the settings used.
+  ///
+  /// The library keys stories on [id] (see [StoryRepository]), so a stable,
+  /// unique id is essential. The backend id is used when it's a real value;
+  /// if it's missing/blank or a known server-side placeholder, we mint a
+  /// local unique id so distinct generations never collide in the Bookshelf.
   factory Story.fromGenerationJson(
     Map<String, dynamic> json,
     StorySettings settings,
   ) {
     return Story(
-      id: json['id'] as String,
+      id: _resolveId(json['id']),
       title: json['title'] as String,
       text: json['story'] as String,
       audioUrl: json['audioUrl'] as String,
       durationSeconds: (json['durationSeconds'] as num).toInt(),
       settings: settings,
     );
+  }
+
+  static String _resolveId(Object? raw) {
+    final id = raw?.toString().trim() ?? '';
+    if (id.isEmpty || id.toLowerCase().contains('placeholder')) {
+      return 'local-${DateTime.now().microsecondsSinceEpoch}';
+    }
+    return id;
   }
 
   Map<String, dynamic> toJson() => {

@@ -2,11 +2,12 @@ import 'story_length.dart';
 
 /// The settings a user picked when creating a story.
 ///
-/// The documented backend contract is `{topic, mood, length}`. Everything else
-/// here — [voice], [backgroundSound], and the literal "Adaptive" choice — is
-/// stored locally and kept out of the POST via [toRequestJson], so we never
-/// change the API contract unilaterally. Coordinate with the backend dev before
-/// wiring any of these into the request.
+/// The documented backend contract is `{topic, mood, narratorType, length}`.
+/// `mood` may be the literal "adaptive" — the backend resolves it. [voice] maps
+/// onto the required `narratorType` (see [resolvedNarratorType]). Only
+/// [backgroundSound] stays local-only and out of the POST via [toRequestJson],
+/// so we never change the API contract unilaterally. Coordinate with the
+/// backend dev before wiring anything else into the request.
 class StorySettings {
   const StorySettings({
     required this.topic,
@@ -31,8 +32,19 @@ class StorySettings {
 
   bool get isAdaptiveMood => mood.trim().toLowerCase() == 'adaptive';
 
-  /// What actually gets sent as `mood`: a real mood, never "adaptive".
-  String get resolvedMood => isAdaptiveMood ? 'calm' : mood.trim().toLowerCase();
+  /// What gets sent as `mood`, lowercased. "Adaptive" is passed through as
+  /// `adaptive` for the backend to resolve.
+  String get resolvedMood => mood.trim().toLowerCase();
+
+  /// The backend's required `narratorType`: `adaptive` | `default` | `warm` |
+  /// `soft` | `deep`. The UI's [voice] labels lowercase directly onto these.
+  /// Quick-start leaves [voice] null (and any unrecognized value) falling back
+  /// to `adaptive` so the backend picks the voice.
+  static const _narratorTypes = {'adaptive', 'default', 'warm', 'soft', 'deep'};
+  String get resolvedNarratorType {
+    final v = voice?.trim().toLowerCase();
+    return _narratorTypes.contains(v) ? v! : 'adaptive';
+  }
 
   StorySettings copyWith({
     String? topic,
@@ -50,10 +62,12 @@ class StorySettings {
     );
   }
 
-  /// Payload for `POST /stories/generate` — contract fields only, mood resolved.
+  /// Payload for `POST /stories/generate` — contract fields only, mood and
+  /// narratorType resolved.
   Map<String, dynamic> toRequestJson() => {
         'topic': topic,
         'mood': resolvedMood,
+        'narratorType': resolvedNarratorType,
         'length': length.apiValue,
       };
 

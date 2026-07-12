@@ -9,6 +9,7 @@ import '../router.dart';
 import '../theme/app_theme.dart';
 import '../widgets/ambient_background.dart';
 import '../widgets/gradient_button.dart';
+import '../widgets/mini_player.dart';
 
 /// Level 2. A replay library of stories the user has listened to. Populated as
 /// a side effect of playback — nothing is generated here.
@@ -35,11 +36,15 @@ class BookshelfScreen extends ConsumerWidget {
       starCount: 46,
       child: Scaffold(
         backgroundColor: Colors.transparent,
+        bottomNavigationBar: const MiniPlayer(),
         appBar: AppBar(
           leadingWidth: 44,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-            onPressed: () => context.pop(),
+            // Reached by push (from Home) → pop back; reached by go (after
+            // saving on Finished, which resets the stack) → fall back to Home.
+            onPressed: () =>
+                context.canPop() ? context.pop() : context.go(Routes.home),
           ),
         ),
         body: SafeArea(
@@ -72,12 +77,14 @@ class BookshelfScreen extends ConsumerWidget {
                               story: story,
                               colors: _palettes[i % _palettes.length],
                               height: _heights[i % _heights.length],
-                              onTap: () {
-                                ref
-                                    .read(currentStoryProvider.notifier)
-                                    .set(story);
-                                context.push(Routes.storyDetail);
-                              },
+                              // Opening detail is a read-only preview — pass the
+                              // story via `extra` rather than setting
+                              // currentStory, so the mini player only reflects a
+                              // story once the user actually plays it.
+                              onTap: () => context.push(
+                                Routes.storyDetail,
+                                extra: story,
+                              ),
                             );
                           },
                         ),
@@ -184,7 +191,7 @@ class _ShelfItem extends StatelessWidget {
               )),
           const SizedBox(height: 4),
           Text(
-            resume ? 'Resume' : story.settings.length.duration,
+            resume ? 'Resume' : story.settings.length.label,
             style: TextStyle(
               fontSize: 12.5,
               fontWeight: FontWeight.w700,

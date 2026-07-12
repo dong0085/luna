@@ -4,6 +4,21 @@ A calm bedtime-story app for adults. Luna generates gentle stories and reads the
 
 Built at cuHacking 2026.
 
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/home.jpg" width="240" alt="Home"><br><sub>Home</sub></td>
+    <td align="center"><img src="docs/screenshots/quick-start.jpg" width="240" alt="Quick start"><br><sub>Quick start — tap a spark</sub></td>
+    <td align="center"><img src="docs/screenshots/custom-story.jpg" width="240" alt="Custom story"><br><sub>Custom story</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/player.jpg" width="240" alt="Player"><br><sub>Player</sub></td>
+    <td align="center"><img src="docs/screenshots/bookshelf.jpg" width="240" alt="Bookshelf"><br><sub>Bookshelf</sub></td>
+    <td align="center"><img src="docs/screenshots/story-detail.jpg" width="240" alt="Story detail"><br><sub>Story detail — resume &amp; replay</sub></td>
+  </tr>
+</table>
+
 ## What it does
 
 - **Generate a story** two ways — **Quick start** (tap a drifting "spark" of an idea) or **Custom** (topic, mood, narrator voice, background sound, length).
