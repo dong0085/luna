@@ -9,9 +9,14 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
 
+    <!-- Dart's http (VM sockets) ignores Android's cleartext policy, but
+         ExoPlayer (just_audio) enforces it: without this, story generation over
+         http:// succeeds while the audio fetch is blocked and the player parks
+         silently at 0:00. Needed while the backend serves plain-http audio. -->
     <application
         android:label="luna"
         android:name="${applicationName}"
+        android:usesCleartextTraffic="true"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
