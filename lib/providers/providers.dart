@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
@@ -106,6 +107,7 @@ class PlayerController extends Notifier<Story?> {
   late final AudioPlayer _player;
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<ProcessingState>? _stateSub;
+  StreamSubscription<PlaybackEvent>? _errorSub;
 
   /// True once the current story lives in the repo — either because we're
   /// replaying a saved story or because the user just saved this draft. Gates
@@ -121,6 +123,7 @@ class PlayerController extends Notifier<Story?> {
     ref.onDispose(() {
       _positionSub?.cancel();
       _stateSub?.cancel();
+      _errorSub?.cancel();
     });
     return null;
   }
@@ -133,23 +136,41 @@ class PlayerController extends Notifier<Story?> {
     _saved = ref.read(storyRepositoryProvider).exists(story.id);
     ref.read(currentStoryProvider.notifier).set(story);
 
-    await _player.setAudioSource(
-      LockCachingAudioSource(
-        Uri.parse(story.audioUrl),
-        tag: MediaItem(
-          id: story.id,
-          title: story.title,
-          artist: 'Luna',
-          duration: story.duration,
+    // setAudioSource fails for a whole class of device-only reasons (an audioUrl
+    // the phone can't reach, cleartext-blocked http, a 404). Callers fire this
+    // without awaiting, so an uncaught throw would leave the Player silently
+    // parked at 0:00 with nothing in the log. Name the URL in the error.
+    try {
+      await _player.setAudioSource(
+        LockCachingAudioSource(
+          Uri.parse(story.audioUrl),
+          tag: MediaItem(
+            id: story.id,
+            title: story.title,
+            artist: 'Luna',
+            duration: story.duration,
+          ),
         ),
-      ),
-      initialPosition: story.lastPosition,
-    );
+        initialPosition: story.lastPosition,
+      );
+    } catch (e) {
+      debugPrint('[Luna] audio load FAILED for "${story.audioUrl}": $e');
+      rethrow;
+    }
 
     _wireListeners();
   }
 
   void _wireListeners() {
+    // Playback errors (stream dies mid-play, host unreachable) arrive here, not
+    // as a throw from setAudioSource.
+    _errorSub?.cancel();
+    _errorSub = _player.playbackEventStream.listen(
+      (_) {},
+      onError: (Object e, StackTrace st) =>
+          debugPrint('[Luna] audio playback error: $e'),
+    );
+
     _positionSub?.cancel();
     _positionSub = _player.positionStream.listen((pos) {
       final now = DateTime.now();
@@ -185,6 +206,7 @@ class PlayerController extends Notifier<Story?> {
     await _player.stop();
     _positionSub?.cancel();
     _stateSub?.cancel();
+    _errorSub?.cancel();
     _saved = false;
     state = null;
     ref.read(currentStoryProvider.notifier).clear();
